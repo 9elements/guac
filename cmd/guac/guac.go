@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,7 +14,20 @@ import (
 	"github.com/wwt/guac"
 )
 
+const (
+	defaultAddr      = "0.0.0.0:4567"
+	defaultGuacdAddr = "127.0.0.1:4822"
+)
+
+var (
+	addr      = flag.String("addr", defaultAddr, "server address")
+	guacdAddr = flag.String("guacd", defaultGuacdAddr, "guacd address")
+)
+
 func main() {
+
+	flag.Parse()
+
 	logrus.SetLevel(logrus.DebugLevel)
 
 	servlet := guac.NewServer(DemoDoConnect)
@@ -53,10 +67,10 @@ func main() {
 		}
 	})
 
-	logrus.Println("Serving on http://127.0.0.1:4567")
+	logrus.Printf("Serving on http://%s", *addr)
 
 	s := &http.Server{
-		Addr:           "0.0.0.0:4567",
+		Addr:           *addr,
 		Handler:        mux,
 		ReadTimeout:    guac.SocketTimeout,
 		WriteTimeout:   guac.SocketTimeout,
@@ -116,7 +130,7 @@ func DemoDoConnect(request *http.Request) (guac.Tunnel, error) {
 	config.AudioMimetypes = []string{"audio/L16", "rate=44100", "channels=2"}
 
 	logrus.Debug("Connecting to guacd")
-	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:4822")
+	addr, err := net.ResolveTCPAddr("tcp", *guacdAddr)
 
 	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
